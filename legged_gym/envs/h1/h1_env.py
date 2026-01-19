@@ -1,8 +1,11 @@
 
 from legged_gym.envs.base.legged_robot import LeggedRobot
+from legged_gym import LEGGED_GYM_ROOT_DIR
 
 from isaacgym.torch_utils import *
 from isaacgym import gymtorch, gymapi, gymutil
+import os
+import numpy as np
 import torch
 
 class H1Robot(LeggedRobot):
@@ -44,6 +47,57 @@ class H1Robot(LeggedRobot):
     def _init_buffers(self):
         super()._init_buffers()
         self._init_foot()
+
+        # === IMITATION LEARNING: Load Motion Data ===
+        self.ref_dof_pos = None
+        self.ref_dof_vel = None
+        self.motion_len = 0
+        self.motion_dt = None
+
+        ref_file = getattr(self.cfg.env, "reference_motion_file", None)
+        if ref_file:
+            # allow relative paths (relative to repo root)
+            ref_path = ref_file
+            if not os.path.isabs(ref_path):
+                ref_path = os.path.join(LEGGED_GYM_ROOT_DIR, ref_path)
+
+            print(f"Loading reference motion from {ref_path}")
+            loaded_data = np.load(ref_path, allow_pickle=True).item()
+
+            # Expect dict keys: "dof_pos", "dof_vel", "dt"
+            self.ref_dof_pos = torch.tensor(loaded_data["dof_pos"], device=self.device, dtype=torch.float)
+            self.ref_dof_vel = torch.tensor(loaded_data["dof_vel"], device=self.device, dtype=torch.float)
+            self.motion_len = int(self.ref_dof_pos.shape[0])
+            self.motion_dt = float(loaded_data["dt"])
+
+            if self.motion_len <= 0:
+                raise ValueError(f"Reference motion has no frames: {ref_path}")
+            if self.motion_dt <= 0:
+                raise ValueError(f"Reference motion dt must be > 0, got {self.motion_dt}: {ref_path}")
+
+            print(f"Motion loaded: {self.motion_len} frames, dt={self.motion_dt}")
+
+    def _get_ref_state(self):
+        """Return reference DOF position/velocity for current sim time for each env.
+
+        Returns:
+            ref_pos: (num_envs, num_dof)
+            ref_vel: (num_envs, num_dof)
+        """
+        if self.ref_dof_pos is None or self.ref_dof_vel is None or self.motion_len <= 0 or self.motion_dt is None:
+            # Fallback: no reference loaded
+            return self.dof_pos, self.dof_vel
+
+        # current time per env [s]
+        phase_t = self.episode_length_buf.to(dtype=torch.float) * self.dt
+        motion_idx = (phase_t / self.motion_dt).to(dtype=torch.long)
+
+        if getattr(self.cfg.env, "reference_loop", True):
+            motion_idx = motion_idx % self.motion_len
+        else:
+            motion_idx = torch.clamp(motion_idx, 0, self.motion_len - 1)
+
+        return self.ref_dof_pos[motion_idx], self.ref_dof_vel[motion_idx]
 
     def update_feet_state(self):
         self.gym.refresh_rigid_body_state_tensor(self.sim)
@@ -121,4 +175,20 @@ class H1Robot(LeggedRobot):
     
     def _reward_hip_pos(self):
         return torch.sum(torch.square(self.dof_pos[:,[0,1,5,6]]), dim=1)
+
+    def _reward_tracking_joint_pos(self):
+        """Imitation reward: track reference joint positions with Gaussian kernel."""
+        ref_pos, _ = self._get_ref_state()
+        # sum squared error over joints
+        error = torch.sum(torch.square(self.dof_pos - ref_pos), dim=1)
+        sigma = float(getattr(self.cfg.rewards, "tracking_sigma", 0.25))
+        # avoid divide-by-zero
+        sigma = max(sigma, 1e-6)
+        return torch.exp(-error / sigma)
+
+    # Optional: if you later add scale `tracking_lin_vel` and want to use it as imitation term
+    def _reward_tracking_lin_vel(self):
+        """Imitation reward: track reference base linear velocity if reference provides it."""
+        # Not available in current reference format; keep as safe fallback.
+        return torch.zeros(self.num_envs, dtype=torch.float, device=self.device)
     
