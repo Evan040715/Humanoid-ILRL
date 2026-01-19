@@ -100,6 +100,16 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
         # num envs
         if args.num_envs is not None:
             env_cfg.env.num_envs = args.num_envs
+        # reference motion file (for imitation learning)
+        if hasattr(args, 'reference_motion_file') and args.reference_motion_file is not None:
+            env_cfg.env.reference_motion_file = args.reference_motion_file
+        # reference loop flag
+        if hasattr(args, 'reference_loop') and args.reference_loop is not None:
+            # Convert string to bool if needed
+            if isinstance(args.reference_loop, str):
+                env_cfg.env.reference_loop = args.reference_loop.lower() in ('true', '1', 'yes', 'on')
+            else:
+                env_cfg.env.reference_loop = bool(args.reference_loop)
     if cfg_train is not None:
         if args.seed is not None:
             cfg_train.seed = args.seed
@@ -134,6 +144,8 @@ def get_args():
         {"name": "--num_envs", "type": int, "help": "Number of environments to create. Overrides config file if provided."},
         {"name": "--seed", "type": int, "help": "Random seed. Overrides config file if provided."},
         {"name": "--max_iterations", "type": int, "help": "Maximum number of training iterations. Overrides config file if provided."},
+        {"name": "--reference_motion_file", "type": str, "help": "Path to reference motion file for imitation learning. Overrides config file if provided."},
+        {"name": "--reference_loop", "type": str, "help": "Whether to loop the reference motion (true/false). Overrides config file if provided."},
     ]
     # parse arguments
     args = gymutil.parse_arguments(

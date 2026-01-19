@@ -6,9 +6,9 @@ import os
 
 # === 配置路径 ===
 # 修改这里为你下载的 npz 文件路径
-INPUT_PATH = "resources/motions/input/07/07_01_poses.npz" 
+INPUT_PATH = "resources/motions/input/01/01_01_poses.npz" 
 # 输出路径
-OUTPUT_PATH = "resources/motions/output/07/h1_cmu_walk_10dof.npy"
+OUTPUT_PATH = "resources/motions/output/01/h1_cmu_jump_10dof.npy"
 
 # === H1 关节配置 (10 DoF) ===
 # 顺序: [L_Hip_Yaw, L_Hip_Roll, L_Hip_Pitch, L_Knee, L_Ankle, 

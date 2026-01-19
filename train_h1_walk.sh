@@ -10,10 +10,14 @@ python legged_gym/scripts/train.py \
     --rl_device=cuda:0 \
     --num_envs=4096 \
     --experiment_name=h1 \
-    --run_name=AMASS_CMU_07_01_walk \
+    --run_name=AMASS_CMU_01_01_jump \
+    --reference_motion_file=resources/motions/output/01/h1_cmu_jump_10dof.npy \
+    --reference_loop=true
     # --headless
     # --experiment_name=h1_walk
     # --run_name=imitation_v1
     # --resume
     # --load_run=-1
     # --checkpoint=-1
+    # --reference_motion_file=resources/motions/output/XX/h1_other_motion.npy
+    # --reference_loop=false
