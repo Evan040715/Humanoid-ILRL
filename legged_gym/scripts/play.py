@@ -49,5 +49,3 @@ if __name__ == '__main__':
     MOVE_CAMERA = False
     args = get_args()
     play(args)
-
-#  即
