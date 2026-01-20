@@ -26,10 +26,11 @@ class H1RoughCfg( LeggedRobotCfg ):
         }
     
     class env(LeggedRobotCfg.env):
-        # 全身19 DOF: 3 + 3 + 3 + 19 + 19 + 19 = 67
-        num_observations = 68
-        # privileged: 3 + 3 + 3 + 19 + 19 + 19 = 71
-        num_privileged_obs = 71
+        # Observation structure in `h1_env.py` (Humanoid Imitation Learning):
+        # obs:   ang_vel(3) + gravity(3) + commands(3) + dof_pos(19) + dof_vel(19) + actions(19) + diff_pos(19) + sin/cos(2) = 87
+        # priv:  lin_vel(3) + ang_vel(3) + gravity(3) + commands(3) + dof_pos(19) + dof_vel(19) + actions(19) + diff_pos(19) + sin/cos(2) = 90
+        num_observations = 87
+        num_privileged_obs = 90
         num_actions = 19
 
 
@@ -120,18 +121,18 @@ class H1RoughCfg( LeggedRobotCfg ):
             tracking_ang_vel = 0.0     # <--- 改为 0
             alive = 1.0                # 活着就有分，鼓励不摔倒
             feet_air_time = 1.0        # 鼓励抬脚，防止蹭地拖行
-            lin_vel_z = -1.0           # 别乱跳
-            ang_vel_xy = -0.05         # 躯干别晃
-            orientation = -1.0         # 别摔倒
+            # Disable classic locomotion penalties that can fight humanoid imitation
+            lin_vel_z = 0.0
+            ang_vel_xy = 0.0
+            orientation = 0.0
             collision = -1.0           # 别撞腿
-            # 调低高度惩罚，避免和模仿动作打架
-            base_height = -1.0         # 从 -10 改成 -1
+            base_height = 0.0
             # 其他保持微量惩罚
             dof_acc = -2.5e-7
             action_rate = -0.01
             torques = 0.0
             dof_pos_limits = -5.0
-            hip_pos = -1.0
+            hip_pos = 0.0
             contact_no_vel = -0.2
             feet_swing_height = -20.0
             contact = 0.18
@@ -140,12 +141,12 @@ class H1RoughCfg( LeggedRobotCfg ):
 class H1RoughCfgPPO( LeggedRobotCfgPPO ):
     class policy:
         init_noise_std = 0.8
-        actor_hidden_dims = [32]
-        critic_hidden_dims = [32]
+        actor_hidden_dims = [512,256,128]
+        critic_hidden_dims = [512,256,128]
         activation = 'elu' # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
         # only for 'ActorCriticRecurrent':
         rnn_type = 'lstm'
-        rnn_hidden_size = 64
+        rnn_hidden_size = 256
         rnn_num_layers = 1
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01

@@ -24,13 +24,17 @@ class H1Robot(LeggedRobot):
         self.add_noise = self.cfg.noise.add_noise
         noise_scales = self.cfg.noise.noise_scales
         noise_level = self.cfg.noise.noise_level
+        # Observation structure (Humanoid IL):
+        # [ang_vel(3), gravity(3), commands(3), dof_pos(19), dof_vel(19), actions(19), diff_pos(19), sin/cos(2)]
         noise_vec[:3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
         noise_vec[3:6] = noise_scales.gravity * noise_level
-        noise_vec[6:9] = 0. # commands
+        noise_vec[6:9] = 0.  # commands
         noise_vec[9:9+self.num_actions] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
         noise_vec[9+self.num_actions:9+2*self.num_actions] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
-        noise_vec[9+2*self.num_actions:9+3*self.num_actions] = 0. # previous actions
-        noise_vec[9+3*self.num_actions:9+3*self.num_actions+2] = 0. # sin/cos phase
+        noise_vec[9+2*self.num_actions:9+3*self.num_actions] = 0.  # previous actions
+        # diff_pos term (already an error signal) - keep noise at 0 for stability
+        noise_vec[9+3*self.num_actions:9+4*self.num_actions] = 0.
+        noise_vec[9+4*self.num_actions:9+4*self.num_actions+2] = 0.  # sin/cos phase
         
         return noise_vec
 
@@ -109,14 +113,35 @@ class H1Robot(LeggedRobot):
     def _post_physics_step_callback(self):
         self.update_feet_state()
 
-        period = 0.8
-        offset = 0.5
-        self.phase = (self.episode_length_buf * self.dt) % period / period
+        # expose these so we can randomize phase in reset_idx()
+        self.phase_period = 0.8
+        self.phase_offset = 0.5
+        self.phase = (self.episode_length_buf * self.dt) % self.phase_period / self.phase_period
         self.phase_left = self.phase
-        self.phase_right = (self.phase + offset) % 1
+        self.phase_right = (self.phase + self.phase_offset) % 1
         self.leg_phase = torch.cat([self.phase_left.unsqueeze(1), self.phase_right.unsqueeze(1)], dim=-1)
         
         return super()._post_physics_step_callback()
+    
+    def reset_idx(self, env_ids):
+        # call base reset
+        super().reset_idx(env_ids)
+
+        # Phase randomization: randomize episode_length_buf so phase starts at random offsets
+        # This helps generalization and reduces overfitting to a single initial phase.
+        period = float(getattr(self, "phase_period", 0.8))
+        max_phase_steps = max(int(period / self.dt), 1)
+        # randint high is exclusive
+        rand_steps = torch.randint(
+            low=0,
+            high=max_phase_steps,
+            size=(len(env_ids),),
+            device=self.device,
+            dtype=self.episode_length_buf.dtype,
+        )
+        self.episode_length_buf[env_ids] = rand_steps
+        # keep reset_buf consistent (base sets to 1)
+        self.reset_buf[env_ids] = 1
     
     
     def compute_observations(self):
@@ -124,12 +149,16 @@ class H1Robot(LeggedRobot):
         """
         sin_phase = torch.sin(2 * np.pi * self.phase ).unsqueeze(1)
         cos_phase = torch.cos(2 * np.pi * self.phase ).unsqueeze(1)
+        # tracking error term (fix blindness for IL): desired - current
+        ref_pos, _ = self._get_ref_state()
+        diff_pos = (ref_pos - self.dof_pos) * self.obs_scales.dof_pos
         self.obs_buf = torch.cat((  self.base_ang_vel  * self.obs_scales.ang_vel,
                                     self.projected_gravity,
                                     self.commands[:, :3] * self.commands_scale,
                                     (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
+                                    diff_pos,
                                     sin_phase,
                                     cos_phase
                                     ),dim=-1)
@@ -140,6 +169,7 @@ class H1Robot(LeggedRobot):
                                     (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
                                     self.dof_vel * self.obs_scales.dof_vel,
                                     self.actions,
+                                    diff_pos,
                                     sin_phase,
                                     cos_phase
                                     ),dim=-1)
