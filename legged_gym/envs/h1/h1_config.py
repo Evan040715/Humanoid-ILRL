@@ -8,32 +8,33 @@ class H1RoughCfg( LeggedRobotCfg ):
            'left_hip_roll_joint' : 0,               
            'left_hip_pitch_joint' : -0.1,         
            'left_knee_joint' : 0.3,       
-           'left_ankle_joint' : -0.2,     
+           'left_ankle_joint' : -0.2,           #5
            'right_hip_yaw_joint' : 0., 
            'right_hip_roll_joint' : 0, 
            'right_hip_pitch_joint' : -0.1,                                       
            'right_knee_joint' : 0.3,                                             
-           'right_ankle_joint' : -0.2,                                     
-           'torso_joint' : 0., 
-           'left_shoulder_pitch_joint' : 0., 
-           'left_shoulder_roll_joint' : 0, 
-           'left_shoulder_yaw_joint' : 0.,
+           'right_ankle_joint' : -0.2,          #10                            
+           'torso_joint' : 0.,                  #11
+           'left_shoulder_pitch_joint' : 0.,    #12
+           'left_shoulder_roll_joint' : 0,      #13
+           'left_shoulder_yaw_joint' : 0.,      #14
            'left_elbow_joint'  : 0.,
-           'right_shoulder_pitch_joint' : 0.,
+           'right_shoulder_pitch_joint' : 0.,   #16
            'right_shoulder_roll_joint' : 0.0,
            'right_shoulder_yaw_joint' : 0.,
-           'right_elbow_joint' : 0.,
+            'right_elbow_joint' : 0.,           #18
         }
     
     class env(LeggedRobotCfg.env):
-        # 3 + 3 + 3 + 10 + 10 + 10 + 2 = 41
-        num_observations = 41
-        num_privileged_obs = 44
-        num_actions = 10
+        # 全身19 DOF: 3 + 3 + 3 + 19 + 19 + 19 = 67
+        num_observations = 68
+        # privileged: 3 + 3 + 3 + 19 + 19 + 19 = 67
+        num_privileged_obs = 71
+        num_actions = 19
 
 
-        # reference motion for walking
-        reference_motion_file = "resources/motions/output/07/h1_cmu_walk_10dof.npy"
+        # reference motion for walking (19 DOF)
+        reference_motion_file = "resources/motions/output/07/h1_cmu_walk_19dof.npy"
         reference_loop = True
 
       

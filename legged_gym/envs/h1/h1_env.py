@@ -174,7 +174,13 @@ class H1Robot(LeggedRobot):
         return torch.sum(penalize, dim=(1,2))
     
     def _reward_hip_pos(self):
-        return torch.sum(torch.square(self.dof_pos[:,[0,1,5,6]]), dim=1)
+        # 全身17 DOF: 索引0,1是左髋yaw/roll, 5,6是右髋yaw/roll
+        # 如果num_actions=17，这些索引仍然有效
+        if self.num_actions >= 7:
+            return torch.sum(torch.square(self.dof_pos[:,[0,1,5,6]]), dim=1)
+        else:
+            # 10 DOF模式：只有腿部关节
+            return torch.sum(torch.square(self.dof_pos[:,[0,1,5,6]]), dim=1)
 
     def _reward_tracking_joint_pos(self):
         """Imitation reward: track reference joint positions with Gaussian kernel."""

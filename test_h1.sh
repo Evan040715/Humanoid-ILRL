@@ -1,4 +1,6 @@
+#!/bin/bash
 
+# Testing script for H1 Robot Imitation Learning
 
 python legged_gym/scripts/play.py \
     --task=h1 \

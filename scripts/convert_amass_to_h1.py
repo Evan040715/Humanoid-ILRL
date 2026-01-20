@@ -8,11 +8,18 @@ import os
 # 修改这里为你下载的 npz 文件路径
 INPUT_PATH = "resources/motions/input/01/01_01_poses.npz" 
 # 输出路径
-OUTPUT_PATH = "resources/motions/output/01/h1_cmu_jump_10dof.npy"
+OUTPUT_PATH = "resources/motions/output/01/h1_cmu_jump_19dof.npy"
 
-# === H1 关节配置 (10 DoF) ===
-# 顺序: [L_Hip_Yaw, L_Hip_Roll, L_Hip_Pitch, L_Knee, L_Ankle, 
-#        R_Hip_Yaw, R_Hip_Roll, R_Hip_Pitch, R_Knee, R_Ankle]
+# === H1 关节配置 (19 DoF) ===
+# 顺序必须与 URDF 文件中的关节顺序一致！
+# URDF顺序 (从 resources/robots/h1/urdf/h1.urdf):
+# 0-4:   [L_Hip_Yaw, L_Hip_Roll, L_Hip_Pitch, L_Knee, L_Ankle]
+# 5-9:   [R_Hip_Yaw, R_Hip_Roll, R_Hip_Pitch, R_Knee, R_Ankle]
+# 10:    [Torso]
+# 11-14: [L_Shoulder_Pitch, L_Shoulder_Roll, L_Shoulder_Yaw, L_Elbow]
+# 15-18: [R_Shoulder_Pitch, R_Shoulder_Roll, R_Shoulder_Yaw, R_Elbow]
+# 
+# 此顺序必须与 h1_config.py 中 default_joint_angles 字典的顺序一致
 # 目标帧率
 TARGET_DT = 0.02 
 
@@ -53,10 +60,11 @@ def convert_cmu_to_h1():
     # === 2. 关节映射 (Mapping) ===
     # SMPL 关节索引 (参考 SMPL 文档):
     # 0: Pelvis (Root), 1: L_Hip, 2: R_Hip, 4: L_Knee, 5: R_Knee, 7: L_Ankle, 8: R_Ankle
+    # 12: L_Shoulder, 13: R_Shoulder, 16: L_Elbow, 17: R_Elbow
     # 每个关节有 3 个值 (轴角 Axis-Angle)
     
-    # 创建 H1 的动作容器 (Frames, 10)
-    h1_dof_pos = np.zeros((target_num_frames, 10))
+    # 创建 H1 的动作容器 (Frames, 19)
+    h1_dof_pos = np.zeros((target_num_frames, 19))
     
     # --- 辅助函数: 轴角转欧拉角 ---
     # SMPL 主要是以 X 轴为弯曲轴 (Pitch)
@@ -110,6 +118,39 @@ def convert_cmu_to_h1():
         r_ankle_aa = poses_resampled[f, 24:27]
         r_ankle_euler = get_euler(r_ankle_aa, 'xyz')
         h1_dof_pos[f, 9] = r_ankle_euler[0] - 0.1
+
+        # --- 躯干 (Torso) ---
+        # SMPL Pelvis (idx 0 -> indices 0:3) 的旋转用于 torso
+        # 通常 torso 主要是 Yaw (Z轴旋转)
+        pelvis_aa = poses_resampled[f, 0:3]  # Root joint
+        pelvis_euler = get_euler(pelvis_aa, 'xyz')
+        h1_dof_pos[f, 10] = pelvis_euler[2] * 0.3  # Torso Yaw (减小幅度)
+
+        # --- 左臂 (Left Arm) ---
+        # 1. Left Shoulder (SMPL idx 12 -> indices 36:39)
+        l_shoulder_aa = poses_resampled[f, 36:39]
+        l_shoulder_euler = get_euler(l_shoulder_aa, 'xyz')
+        h1_dof_pos[f, 11] = l_shoulder_euler[1] * 0.8  # Pitch (前后摆动)
+        h1_dof_pos[f, 12] = l_shoulder_euler[0] * 0.5  # Roll (侧向)
+        h1_dof_pos[f, 13] = l_shoulder_euler[2] * 0.3  # Yaw (旋转)
+
+        # 2. Left Elbow (SMPL idx 16 -> indices 48:51)
+        l_elbow_aa = poses_resampled[f, 48:51]
+        l_elbow_euler = get_euler(l_elbow_aa, 'xyz')
+        h1_dof_pos[f, 14] = l_elbow_euler[1] * 0.8  # Elbow (主要弯曲)
+
+        # --- 右臂 (Right Arm) ---
+        # 1. Right Shoulder (SMPL idx 13 -> indices 39:42)
+        r_shoulder_aa = poses_resampled[f, 39:42]
+        r_shoulder_euler = get_euler(r_shoulder_aa, 'xyz')
+        h1_dof_pos[f, 15] = r_shoulder_euler[1] * 0.8  # Pitch
+        h1_dof_pos[f, 16] = r_shoulder_euler[0] * 0.5  # Roll
+        h1_dof_pos[f, 17] = r_shoulder_euler[2] * 0.3  # Yaw
+
+        # 2. Right Elbow (SMPL idx 17 -> indices 51:54)
+        r_elbow_aa = poses_resampled[f, 51:54]
+        r_elbow_euler = get_euler(r_elbow_aa, 'xyz')
+        h1_dof_pos[f, 18] = r_elbow_euler[1] * 0.8  # Elbow
 
     # === 3. 保存为 .npy ===
     data_dict = {
