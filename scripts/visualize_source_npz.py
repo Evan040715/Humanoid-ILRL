@@ -7,7 +7,7 @@ import os
 
 # ================= 配置区域 =================
 # 1. 原始数据路径 (你想看的那个文件)
-NPZ_FILE = "resources/motions/amass_raw/CMU/01/01_01_poses.npz" 
+NPZ_FILE = "resources/motions/amass_raw/CMU/07/07_01_poses.npz" 
 
 # 2. SMPL 模型路径 (必须存在!)
 MODEL_PATH = "resources/smpl/SMPL_NEUTRAL.pkl" 
