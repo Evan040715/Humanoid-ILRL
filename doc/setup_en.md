@@ -151,7 +151,7 @@ cd unitree_sdk2_python
 pip install -e .
 ```
 
-###2.6 Install visualization packages
+### 2.6 Install visualization packages
 ```bash
 pip install pillow==9.5.0 chumpy=0.70  smplx=0.1.28
 ```
