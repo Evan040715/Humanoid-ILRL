@@ -11,7 +11,8 @@ python legged_gym/scripts/train.py \
     --num_envs=4096 \
     --experiment_name=h1 \
     --run_name=AMASS_CMU_07_01_walk \
-    --reference_motion_file=resources/motions/output/07/h1_cmu_walk_19dof.npy \
+    --save_interval=500 \
+    --reference_motion_file=resources/motions/output/13/h1_cmu_drinksoda_19dof.npy \
     --reference_loop=true
     # --headless
     # --experiment_name=h1_walk

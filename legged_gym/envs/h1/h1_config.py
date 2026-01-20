@@ -28,7 +28,7 @@ class H1RoughCfg( LeggedRobotCfg ):
     class env(LeggedRobotCfg.env):
         # 全身19 DOF: 3 + 3 + 3 + 19 + 19 + 19 = 67
         num_observations = 68
-        # privileged: 3 + 3 + 3 + 19 + 19 + 19 = 67
+        # privileged: 3 + 3 + 3 + 19 + 19 + 19 = 71
         num_privileged_obs = 71
         num_actions = 19
 

@@ -6,9 +6,9 @@ import os
 
 # === 配置路径 ===
 # 修改这里为你下载的 npz 文件路径
-INPUT_PATH = "resources/motions/input/01/01_01_poses.npz" 
+INPUT_PATH = "resources/motions/input/13/13_09_poses.npz" 
 # 输出路径
-OUTPUT_PATH = "resources/motions/output/01/h1_cmu_jump_19dof.npy"
+OUTPUT_PATH = "resources/motions/output/13/h1_cmu_drinksoda_19dof.npy"
 
 # === H1 关节配置 (19 DoF) ===
 # 顺序必须与 URDF 文件中的关节顺序一致！

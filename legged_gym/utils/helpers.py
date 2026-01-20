@@ -126,6 +126,8 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             cfg_train.runner.load_run = args.load_run
         if args.checkpoint is not None:
             cfg_train.runner.checkpoint = args.checkpoint
+        if hasattr(args, 'save_interval') and args.save_interval is not None:
+            cfg_train.runner.save_interval = args.save_interval
 
     return env_cfg, cfg_train
 
@@ -144,6 +146,7 @@ def get_args():
         {"name": "--num_envs", "type": int, "help": "Number of environments to create. Overrides config file if provided."},
         {"name": "--seed", "type": int, "help": "Random seed. Overrides config file if provided."},
         {"name": "--max_iterations", "type": int, "help": "Maximum number of training iterations. Overrides config file if provided."},
+        {"name": "--save_interval", "type": int, "help": "Save model checkpoint every N iterations. Overrides config file if provided."},
         {"name": "--reference_motion_file", "type": str, "help": "Path to reference motion file for imitation learning. Overrides config file if provided."},
         {"name": "--reference_loop", "type": str, "help": "Whether to loop the reference motion (true/false). Overrides config file if provided."},
     ]
