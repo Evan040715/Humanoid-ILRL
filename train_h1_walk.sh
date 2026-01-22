@@ -8,11 +8,11 @@ python legged_gym/scripts/train.py \
     --max_iterations=40000 \
     --sim_device=cuda:0 \
     --rl_device=cuda:0 \
-    --num_envs=4096 \
+    --num_envs=512 \
     --experiment_name=h1 \
-    --run_name=h1_141_16_wavehello_19dof_03 \
-    --save_interval=500 \
-    --reference_motion_file=resources/motions/output/h1_141_16_wavehello_19dof_03.npy \
+    --run_name=violin_h1_19dof \
+    --save_interval=250 \
+    --reference_motion_file=resources/motions/output/from_pkl/violin_h1_19dof.npy \
     --reference_loop=true
     # --headless
     # --experiment_name=h1_walk

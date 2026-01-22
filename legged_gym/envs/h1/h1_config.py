@@ -157,3 +157,136 @@ class H1RoughCfgPPO( LeggedRobotCfgPPO ):
         experiment_name = 'h1'
 
   
+# from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
+
+# class H1RoughCfg(LeggedRobotCfg):
+#     class init_state(LeggedRobotCfg.init_state):
+#         pos = [0.0, 0.0, 1.05] # x,y,z [m] 稍微提高一点点防止初始穿模
+#         default_joint_angles = { # = target angles [rad] when action = 0.0
+#            'left_hip_yaw_joint' : 0. ,   
+#            'left_hip_roll_joint' : 0,               
+#            'left_hip_pitch_joint' : -0.1,         
+#            'left_knee_joint' : 0.3,       
+#            'left_ankle_joint' : -0.2,
+#            'right_hip_yaw_joint' : 0., 
+#            'right_hip_roll_joint' : 0, 
+#            'right_hip_pitch_joint' : -0.1,                                       
+#            'right_knee_joint' : 0.3,                                             
+#            'right_ankle_joint' : -0.2,
+#            'torso_joint' : 0.,
+#            'left_shoulder_pitch_joint' : 0.,
+#            'left_shoulder_roll_joint' : 0,
+#            'left_shoulder_yaw_joint' : 0.,
+#            'left_elbow_joint'  : 0.,
+#            'right_shoulder_pitch_joint' : 0.,
+#            'right_shoulder_roll_joint' : 0.0,
+#            'right_shoulder_yaw_joint' : 0.,
+#            'right_elbow_joint' : 0.,
+#         }
+    
+#     class env(LeggedRobotCfg.env):
+#         # Observation structure:
+#         # obs: ang_vel(3) + gravity(3) + commands(3) + dof_pos(19) + dof_vel(19) + actions(19) + diff_pos(19) + sin/cos(2) = 87
+#         num_observations = 87
+#         num_privileged_obs = 90
+#         num_actions = 19
+
+#         # Reference motion
+#         reference_motion_file = "resources/motions/output/07/h1_cmu_walk_19dof.npy"
+#         reference_loop = True
+
+#     class domain_rand(LeggedRobotCfg.domain_rand):
+#         randomize_friction = True
+#         friction_range = [0.1, 1.25]
+#         randomize_base_mass = True
+#         added_mass_range = [-1., 3.]
+#         push_robots = True
+#         push_interval_s = 5
+#         max_push_vel_xy = 1.0
+
+#     class control(LeggedRobotCfg.control):
+#         # PD Drive parameters:
+#         control_type = 'P'
+#         stiffness = {
+#             'hip_yaw': 150,
+#             'hip_roll': 150,
+#             'hip_pitch': 150,
+#             'knee': 200,
+#             'ankle': 60,       # <--- [建议修改] 提高到 60，防止脚踝过软抖动
+#             'torso': 300,
+#             'shoulder': 150,
+#             'elbow': 100,
+#         }  # [N*m/rad]
+        
+#         damping = {
+#             'hip_yaw': 2,
+#             'hip_roll': 2,
+#             'hip_pitch': 2,
+#             'knee': 4,
+#             'ankle': 2,
+#             'torso': 6,
+#             'shoulder': 2,
+#             'elbow': 2,
+#         }  # [N*m*s/rad]
+        
+#         # action scale: target angle = actionScale * action + defaultAngle
+#         action_scale = 0.25
+#         decimation = 4
+
+#     class asset(LeggedRobotCfg.asset):
+#         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/h1/urdf/h1.urdf'
+#         name = "h1"
+#         foot_name = "ankle"
+#         penalize_contacts_on = ["hip", "knee"]
+#         terminate_after_contacts_on = ["pelvis"]
+#         self_collisions = 0 
+#         flip_visual_attachments = False
+  
+#     class rewards(LeggedRobotCfg.rewards):
+#         soft_dof_pos_limit = 0.9
+#         base_height_target = 1.0
+#         tracking_sigma = 0.25 
+
+#         class scales(LeggedRobotCfg.rewards.scales):
+#             # === Imitation Learning Weights ===
+#             tracking_joint_pos = 2.0    # 核心奖励
+#             alive = 1.0                 # 生存奖励
+#             feet_air_time = 1.0         # 抬脚奖励
+            
+#             # === Penalties (Keep Low or Zero) ===
+#             tracking_lin_vel = 0.0
+#             tracking_ang_vel = 0.0
+#             lin_vel_z = 0.0
+#             ang_vel_xy = 0.0
+#             orientation = 0.0
+#             base_height = 0.0           # 关掉高度惩罚，完全信任参考动作
+#             hip_pos = 0.0               # 关掉髋部锁定
+            
+#             # Standard Safety Penalties
+#             collision = -1.0
+#             dof_acc = -2.5e-7
+#             action_rate = -0.01
+#             torques = 0.0
+#             dof_pos_limits = -5.0
+#             contact_no_vel = -0.2
+#             feet_swing_height = -20.0
+#             contact = 0.18
+
+# class H1RoughCfgPPO(LeggedRobotCfgPPO):
+#     class policy:
+#         init_noise_std = 0.8
+#         actor_hidden_dims = [512, 256, 128]
+#         critic_hidden_dims = [512, 256, 128]
+#         activation = 'elu'
+#         rnn_type = 'lstm'
+#         rnn_hidden_size = 256
+#         rnn_num_layers = 1
+        
+#     class algorithm(LeggedRobotCfgPPO.algorithm):
+#         entropy_coef = 0.01
+        
+#     class runner(LeggedRobotCfgPPO.runner):
+#         policy_class_name = "ActorCriticRecurrent"
+#         max_iterations = 10000
+#         run_name = ''
+#         experiment_name = 'h1_imitation'

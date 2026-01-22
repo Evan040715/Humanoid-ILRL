@@ -6,7 +6,7 @@ import os
 
 # === 配置 ===
 # 这里填你刚刚生成的 .npy 文件路径
-INPUT_FILE = "resources/motions/output/h1_07_01_walk_19dof.npy"
+INPUT_FILE = "resources/motions/output/from_pkl/violin_h1_19dof.npy"
 
 # === H1 机器人近似尺寸 (单位: 米) ===
 # 这些是硬编码的近似值，只为画火柴人，不代表物理真实

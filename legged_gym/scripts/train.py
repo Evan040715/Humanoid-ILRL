@@ -2,6 +2,8 @@ import os
 import numpy as np
 from datetime import datetime
 import sys
+from pathlib import Path
+
 
 import isaacgym
 from legged_gym.envs import *
